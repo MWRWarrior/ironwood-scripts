@@ -220,29 +220,49 @@
         const conversionsByItem = dropCache.conversionMappings[itemId].reduce((a,b) => (a[b.from] = b, a), {});
 
         let matchingListings = marketData.listings.filter(listing => listing.item in conversionsByItem);
-        for(const listing of matchingListings) {
+        for (const listing of matchingListings) {
             listing.ratio = listing.price / conversionsByItem[listing.item].amount;
         }
-        matchingListings.sort((a,b) => (a.type === 'BUY' ? 1 : -1) * (b.ratio - a.ratio));
-        if(currentFilter.amount) {
+        // Cheapest price per selected resource first when buying.
+        // Buy orders stay ordered by the best payout per that resource.
+        matchingListings.sort((a, b) => (a.type === 'BUY' ? -1 : 1) * (a.ratio - b.ratio));
+        if (currentFilter.amount) {
             matchingListings = matchingListings.slice(0, currentFilter.amount);
         }
-        for(const listing of marketData.listings) {
-            if(matchingListings.includes(listing)) {
+        const visible = new Set(matchingListings);
+        for (const listing of marketData.listings) {
+            if (visible.has(listing)) {
                 listing.element.show();
-                if(!listing.element.find('.ratio').length) {
-                    listing.element.find('.amount').after(`<div class='ratio'>(${listing.ratio.toFixed(2)})</div>`);
+                const text = `(${listing.ratio.toFixed(2)})`;
+                const ratio = listing.element.find('.ratio');
+                if (!ratio.length) {
+                    listing.element.find('.amount').after(`<div class='ratio'>${text}</div>`);
+                } else {
+                    ratio.text(text);
                 }
             } else {
                 listing.element.hide();
             }
         }
+        const parent = matchingListings[0]?.element.parent();
+        if (parent) {
+            for (const listing of matchingListings) {
+                parent.append(listing.element);
+            }
+        }
     }
 
     function resetListingsView(marketData) {
-        for(const element of marketData.listings.map(a => a.element)) {
-            element.find('.ratio').remove();
-            element.show();
+        const listings = marketData.listings.slice().sort((a, b) => {
+            return (+a.element.attr('data-pancake-order') || 0) - (+b.element.attr('data-pancake-order') || 0);
+        });
+        const parent = listings[0]?.element.parent();
+        for (const listing of listings) {
+            if (parent) {
+                parent.append(listing.element);
+            }
+            listing.element.find('.ratio').remove();
+            listing.element.show();
         }
     }
 

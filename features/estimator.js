@@ -54,6 +54,9 @@
     function get(skillId, actionId) {
         const skill = skillCache.byId[skillId];
         const action = actionCache.byId[actionId];
+        if (!action) {
+            return null;
+        }
         if (action.type === 'OUTSKIRTS') {
             return estimatorOutskirts.get(skillId, actionId);
         } else if (skill.type === 'Gathering' || skill.type === 'Crafting') {
@@ -81,13 +84,14 @@
         };
         const levelState = statsStore.getLevel(estimation.skill);
         const goalTimeRow = components.search(componentBlueprint, 'goalTime');
+        const tierExp = util.expToNextTier(levelState.exp);
         estimation.timings = {
             inventory,
             equipment,
             maxAmount,
             finished: Math.min(maxAmount.secondsLeft || Infinity, ...Object.values(inventory).concat(Object.values(equipment)).map(a => a.secondsLeft)),
             level: util.expToNextLevel(levelState.exp) * 3600 / estimation.exp,
-            tier: levelState.level >= 100 ? 0 : util.expToNextTier(levelState.exp) * 3600 / estimation.exp,
+            tier: tierExp === 0 ? 0 : tierExp * 3600 / estimation.exp,
             goal: util.expToSpecificLevel(levelState.exp, goalTimeRow.inputValue) * 3600 / estimation.exp
         };
     }
@@ -333,7 +337,7 @@
                         name: 'Goal level',
                         image: 'https://cdn-icons-png.flaticon.com/512/14751/14751729.png',
                         value: '',
-                        inputValue: '100',
+                        inputValue: '130',
                         inputType: 'number',
                         delay: 1000,
                         action: () => update()

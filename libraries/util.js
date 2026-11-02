@@ -42,7 +42,7 @@
         if (level <= 100) {
             return Math.floor(Math.pow(level, 3.5) * 6 / 5);
         }
-        return Math.round(12_000_000 * Math.pow(Math.pow(3500, .01), level - 100));
+        return Math.floor(12_000_000 * Math.pow(Math.pow(3500, .01), level - 100));
     }
 
     function expToLevel(exp) {
@@ -67,9 +67,10 @@
 
     function expToNextTier(exp) {
         const level = expToLevel(exp);
-        let target = 10;
-        while (target <= level) {
-            target += 15;
+        const tiers = [10, 25, 40, 55, 70, 85, 100, 115, 130];
+        const target = tiers.find(tier => tier > level);
+        if (!target) {
+            return 0;
         }
         return levelToExp(target) - exp;
     }

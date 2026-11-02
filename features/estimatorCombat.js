@@ -23,7 +23,7 @@
         const damagePerHour = attacksReceivedPerHour * monsterStats.damage_.average();
         const foodPerHour = damagePerHour / healPerFood;
 
-        let exp = estimatorAction.LOOPS_PER_HOUR * action.exp / 1000;
+        let exp = estimatorAction.LOOPS_PER_HOUR * action.exp / 10;
         exp *= efficiency;
         exp *= 1 + statsStore.get('DOUBLE_EXP_CHANCE', skill.technicalName) / 100;
         exp *= 1 + statsStore.get('COMBAT_EXP_PERCENT', skill.technicalName) / 100;

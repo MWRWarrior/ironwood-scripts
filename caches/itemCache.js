@@ -1,4 +1,4 @@
-(request) => {
+(request, tierSupplement) => {
 
     const exports = {
         list: [],
@@ -67,6 +67,13 @@
 
     async function loadItems() {
         const enrichedItems = await request.listItems();
+        const known = new Set(enrichedItems.map(entry => entry.item.id));
+        for (const extra of tierSupplement.items) {
+            if (!known.has(extra.item.id)) {
+                enrichedItems.push(extra);
+                known.add(extra.item.id);
+            }
+        }
         for(const enrichedItem of enrichedItems) {
             const item = Object.assign(enrichedItem.item, enrichedItem);
             delete item.item;

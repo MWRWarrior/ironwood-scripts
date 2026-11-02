@@ -1,4 +1,4 @@
-(request, itemCache, actionCache, ingredientCache, skillCache) => {
+(request, itemCache, actionCache, ingredientCache, skillCache, tierSupplement) => {
 
     const exports = {
         list: [],
@@ -13,6 +13,13 @@
 
     async function initialise() {
         const drops = await request.listDrops();
+        const known = new Set(drops.map(drop => drop.id));
+        for (const extra of tierSupplement.drops) {
+            if (!known.has(extra.id)) {
+                drops.push(extra);
+                known.add(extra.id);
+            }
+        }
         for(const drop of drops) {
             exports.list.push(drop);
             if(!exports.byAction[drop.action]) {

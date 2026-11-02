@@ -1,4 +1,4 @@
-(request) => {
+(request, tierSupplement) => {
 
     const exports = {
         list: [],
@@ -8,10 +8,19 @@
 
     async function initialise() {
         const monsters = await request.listMonsters();
-        for(const monster of monsters) {
+        const known = new Set(monsters.map(monster => monster.id));
+        for (const extra of tierSupplement.monsters) {
+            if (!known.has(extra.id)) {
+                monsters.push(extra);
+                known.add(extra.id);
+            }
+        }
+        for (const monster of monsters) {
             exports.list.push(monster);
             exports.byId[monster.id] = monster;
-            exports.byName[monster.name] = monster;
+            if (exports.byName[monster.name] === undefined) {
+                exports.byName[monster.name] = monster;
+            }
         }
         return exports;
     }

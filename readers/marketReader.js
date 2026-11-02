@@ -45,6 +45,9 @@
                 const price = util.parseNumber(element.find('.cost').text());
                 const listingType = type !== 'OWN' ? type : element.find('.tag').length ? 'BUY' : 'SELL';
                 const isOwn = !!element.attr('disabled');
+                if (element.attr('data-pancake-order') == null) {
+                    element.attr('data-pancake-order', listings.length);
+                }
                 listings.push({
                     type: listingType,
                     item: item.id,

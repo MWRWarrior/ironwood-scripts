@@ -188,7 +188,14 @@
     }
 
     function shouldApplyMasteryContract() {
-        return statsStore.getEquipmentItem(itemCache.specialIds.masteryContract);
+        if (!statsStore.getEquipmentItem(itemCache.specialIds.masteryContract)) {
+            return false;
+        }
+        const button = $('skill-page button').filter((_, element) => $(element).text().includes('Mastery Contract')).first();
+        if (!button.length) {
+            return false;
+        }
+        return /\bOn\b/.test(button.text());
     }
 
     return exports;

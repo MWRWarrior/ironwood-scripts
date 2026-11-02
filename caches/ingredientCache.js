@@ -1,4 +1,4 @@
-(request) => {
+(request, tierSupplement) => {
 
     const exports = {
         list: [],
@@ -8,6 +8,13 @@
 
     async function initialise() {
         const ingredients = await request.listIngredients();
+        const known = new Set(ingredients.map(ingredient => ingredient.id));
+        for (const extra of tierSupplement.ingredients) {
+            if (!known.has(extra.id)) {
+                ingredients.push(extra);
+                known.add(extra.id);
+            }
+        }
         for(const ingredient of ingredients) {
             exports.list.push(ingredient);
             if(!exports.byAction[ingredient.action]) {
