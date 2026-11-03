@@ -256,29 +256,16 @@ function toItemRecord(id, item) {
 
 async function main() {
     const source = await fs.readFile(BUNDLE, 'utf8');
-    const ids = parseStringEnum(sliceEnum(source, 'ShadowbarkTree="2000"'));
-    let enumCursor = 0;
-    while ((enumCursor = source.indexOf('={}', enumCursor)) !== -1) {
-        const enumEnd = source.indexOf('})()', enumCursor);
-        if (enumEnd > enumCursor && enumEnd - enumCursor < 100000) {
-            const parsed = parseStringEnum(source.slice(enumCursor, enumEnd));
-            if (parsed.ShadowbarkLog || parsed.EliteKey115 || parsed.Hatchet || parsed.AncientLog || parsed.Mulberry || parsed.OutskirtsGolem || parsed.OutskirtsTreant) {
-                for (const [name, value] of Object.entries(parsed)) {
-                    if (ids[name] === undefined) {
-                        ids[name] = value;
-                    }
-                }
-            }
-        }
-        enumCursor += 3;
-    }
+    const actionIds = parseStringEnum(sliceEnum(source, 'ShadowbarkTree="2000"'));
+    const itemIds = parseStringEnum(sliceEnum(source, 'SylvanBar="1603"'));
+    const monsterIds = parseStringEnum(sliceEnum(source, 'OutskirtsGolem="206"'));
     const equipment = parseStringEnum(sliceEnum(source, '.Hatchet="101"'));
     const speeds = parseSpeedEnum(source);
     const styles = { OneHanded: 'OneHanded', TwoHanded: 'TwoHanded', Ranged: 'Ranged' };
-    const maps = { Xv: ids, AM: ids, Aw: ids, nr: equipment, Hs: speeds, Mz: styles };
+    const maps = { Xv: actionIds, AM: itemIds, Aw: monsterIds, nr: equipment, Hs: speeds, Mz: styles };
     const equipmentNames = Object.fromEntries(Object.entries(equipment).map(([name, id]) => [id, name]));
-    if (!ids.ShadowbarkTree || !ids.EliteKey115) {
-        throw new Error(`Id enum missing entries ShadowbarkTree=${ids.ShadowbarkTree} EliteKey115=${ids.EliteKey115}`);
+    if (actionIds.ShadowbarkTree !== 2000 || itemIds.SylvanBar !== 1603 || itemIds.GlacialBar !== 1803 || monsterIds.OutskirtsGolem !== 206) {
+        throw new Error(`Id enum mismatch actions=${actionIds.ShadowbarkTree} sylvanBar=${itemIds.SylvanBar} glacialBar=${itemIds.GlacialBar} golem=${monsterIds.OutskirtsGolem}`);
     }
 
     const itemsById = {};
@@ -290,7 +277,7 @@ async function main() {
         } catch {
             continue;
         }
-        const id = ids[piece.key] || Number(item?.id);
+        const id = itemIds[piece.key] || Number(item?.id);
         if (!id || !item?.name || itemsById[id]) continue;
         itemsById[id] = item;
     }
@@ -304,7 +291,7 @@ async function main() {
         } catch {
             continue;
         }
-        const id = ids[piece.key] || Number(monster?.id);
+        const id = monsterIds[piece.key] || Number(monster?.id);
         if (!id || !monster?.name || (monster.level || 0) < 115) continue;
         monstersById[id] = monster;
     }
@@ -320,7 +307,7 @@ async function main() {
             evalFailures++;
             continue;
         }
-        const id = ids[piece.key] || Number(action?.id);
+        const id = actionIds[piece.key] || Number(action?.id);
         if (!id || !action?.name || (action.level || 0) < 115) continue;
         parsedActions.push({ ...action, id, _key: piece.key });
     }
@@ -363,7 +350,7 @@ async function main() {
         for (const material of action.materials || []) referencedItems.add(material.id);
     }
     for (const level of [115, 130]) {
-        if (ids[`EliteKey${level}`]) referencedItems.add(ids[`EliteKey${level}`]);
+        if (itemIds[`EliteKey${level}`]) referencedItems.add(itemIds[`EliteKey${level}`]);
     }
 
     const items = [];

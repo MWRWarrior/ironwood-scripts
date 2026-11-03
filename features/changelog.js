@@ -6,6 +6,13 @@
     let changelogs = null;
 
     const localChangelogs = [{
+        id: 1605,
+        time: '2026-11-03T02:05:00.000Z',
+        title: 'v6.5.2 - Item names',
+        entries: [
+            'Fixed - Items - Tier 115 and 130 outputs keep their own name and image'
+        ]
+    }, {
         id: 1604,
         time: '2026-11-03T01:55:00.000Z',
         title: 'v6.5.1 - Version warning',
