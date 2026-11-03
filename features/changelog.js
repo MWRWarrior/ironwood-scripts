@@ -14,7 +14,8 @@
             'Fixed - Estimations - Combat experience per hour',
             'Fixed - Estimations - Mastery contracts follow the per-skill toggle',
             'Fixed - Market filter - Order listings by price of the selected resource',
-            'Patched - Next tier and goal level continue through 115 and 130'
+            'Patched - Next tier and goal level continue through 115 and 130',
+            'Fixed - Version warning - Only appears when a newer fork release is published'
         ]
     }];
 

@@ -31,7 +31,9 @@ async function run() {
     }
     result += await readFile('suffix.js');
     result = await fillPrefetchedCaches(result);
-    writeFile('../plugin.js', result);
+    await writeFile('../plugin.js', result);
+    const version = /@version\s+(\S+)/.exec(result)[1];
+    await writeFile('../version.txt', `${version}\n`);
     console.log('Generated plugin.js');
 }
 
@@ -66,7 +68,7 @@ async function readDir(directory) {
 }
 
 async function writeFile(filename, content) {
-    fs.writeFile(path.resolve(__dirname, filename), content);
+    await fs.writeFile(path.resolve(__dirname, filename), content);
 }
 
 async function removeFile(filename, content) {
