@@ -5,6 +5,19 @@
 
     let changelogs = null;
 
+    const localChangelogs = [{
+        id: 1603,
+        time: '2026-11-03T01:45:00.000Z',
+        title: 'v6.5.0 - Tiers 115 and 130',
+        entries: [
+            'Added - Actions, items, and monsters for level 115 and 130',
+            'Fixed - Estimations - Combat experience per hour',
+            'Fixed - Estimations - Mastery contracts follow the per-skill toggle',
+            'Fixed - Market filter - Order listings by price of the selected resource',
+            'Patched - Next tier and goal level continue through 115 and 130'
+        ]
+    }];
+
     async function initialise() {
         await pages.register({
             category: 'Skills',
@@ -32,7 +45,7 @@
     }
 
     async function load() {
-        changelogs = await request.getChangelogs();
+        changelogs = localChangelogs.concat(await request.getChangelogs());
         loaded.resolve();
     }
 
