@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ironwood RPG - Pancake-Scripts
 // @namespace    http://tampermonkey.net/
-// @version      6.5.0
+// @version      6.5.1
 // @description  A collection of scripts to enhance Ironwood RPG - https://github.com/Boldy97/ironwood-scripts
 // @author       Pancake
 // @match        https://ironwoodrpg.com/*
@@ -11,7 +11,7 @@
 // ==/UserScript==
 
 window.PANCAKE_ROOT = 'https://iwrpg.vectordungeon.com';
-window.PANCAKE_VERSION = '6.5.0';
+window.PANCAKE_VERSION = '6.5.1';
 Object.defineProperty(Array.prototype, '_groupBy', {
     enumerable: false,
     value: function(selector) {
@@ -6065,6 +6065,13 @@ window.moduleRegistry.add('changelog', (Promise, pages, components, request, con
     let changelogs = null;
 
     const localChangelogs = [{
+        id: 1604,
+        time: '2026-11-03T01:55:00.000Z',
+        title: 'v6.5.1 - Version warning',
+        entries: [
+            'Fixed - Version warning - The Pancake update toast no longer appears'
+        ]
+    }, {
         id: 1603,
         time: '2026-11-03T01:45:00.000Z',
         title: 'v6.5.0 - Tiers 115 and 130',
