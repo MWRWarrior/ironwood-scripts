@@ -222,6 +222,15 @@ function inferType(action) {
     return 'ACTIVITY';
 }
 
+const RESOURCE_ITEMS = {
+    charcoal: 'Charcoal',
+    compost: 'Compost',
+    arcanePowder: 'ArcanePowder',
+    metalParts: 'MetalParts',
+    potionMix: 'PotionMix',
+    sigilPieces: 'SigilPieces'
+};
+
 function displayName(action, type) {
     if (type === 'OUTSKIRTS') return `Outskirts ${action.name}`;
     if (type === 'ELITE' && !String(action.name).startsWith('Elite ')) return `Elite ${action.name}`;
@@ -400,6 +409,20 @@ async function main() {
                 action: action.id,
                 item: material.id,
                 amount: material.amount || 1
+            });
+        }
+        for (const [field, itemName] of Object.entries(RESOURCE_ITEMS)) {
+            const amount = action._raw[field];
+            if (!amount) continue;
+            const itemId = itemIds[itemName];
+            if (!itemId) {
+                throw new Error(`Missing item id for ${itemName}`);
+            }
+            ingredients.push({
+                id: ingredientId--,
+                action: action.id,
+                item: itemId,
+                amount
             });
         }
         delete action._raw;

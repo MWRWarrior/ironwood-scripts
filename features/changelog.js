@@ -6,6 +6,13 @@
     let changelogs = null;
 
     const localChangelogs = [{
+        id: 1606,
+        time: '2026-11-03T02:10:00.000Z',
+        title: 'v6.5.3 - Consumed resources',
+        entries: [
+            'Fixed - Estimations - Tier 115 and 130 actions consume charcoal, compost, arcane powder, metal parts, potion mix, and sigil pieces'
+        ]
+    }, {
         id: 1605,
         time: '2026-11-03T02:05:00.000Z',
         title: 'v6.5.2 - Item names',
