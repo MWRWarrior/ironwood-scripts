@@ -6,6 +6,13 @@
     let changelogs = null;
 
     const localChangelogs = [{
+        id: 1607,
+        time: '2026-11-11T00:00:00.000Z',
+        title: 'v6.5.4 - Gathering prices',
+        entries: [
+            'Fixed - Estimations - Tier 115 and 130 gathering prices autofill'
+        ]
+    }, {
         id: 1606,
         time: '2026-11-03T02:10:00.000Z',
         title: 'v6.5.3 - Consumed resources',

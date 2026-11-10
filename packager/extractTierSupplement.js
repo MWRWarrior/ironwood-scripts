@@ -15,6 +15,22 @@ const SKILL_BY_EQUIPMENT = {
     Compass: 'Exploring'
 };
 
+function parseClientPrices(source) {
+    const start = source.indexOf('M={[n.AM.Coin]:1');
+    if (start < 0) {
+        throw new Error('Missing client price map');
+    }
+    const end = source.indexOf('}', start);
+    const prices = {};
+    for (const match of source.slice(start, end).matchAll(/\[n\.AM\.([A-Za-z0-9_]+)\]:(\d+(?:\.\d+)?(?:e\d+)?)/g)) {
+        prices[match[1]] = Number(match[2]);
+    }
+    if (!prices.SylvanOre || !prices.Celestine) {
+        throw new Error(`Price map missing SylvanOre=${prices.SylvanOre} Celestine=${prices.Celestine}`);
+    }
+    return prices;
+}
+
 function sliceEnum(source, anchor) {
     const at = source.indexOf(anchor);
     if (at < 0) {
@@ -237,7 +253,22 @@ function displayName(action, type) {
     return action.name;
 }
 
+function marketPrices(key, tier, clientPrice) {
+    if (!clientPrice) {
+        return { sell: 0, min: 0 };
+    }
+    const crops = new Set(['Verbena', 'Parsnip', 'Cosmos', 'Silverbeet']);
+    if (crops.has(key) && tier && clientPrice === 2 * (tier + 1)) {
+        return { sell: 4 * tier + 2, min: 6 * tier + 2 };
+    }
+    if (key === 'Celestine' || key === 'Faestone') {
+        return { sell: clientPrice, min: Math.round(clientPrice * 1.2) };
+    }
+    return { sell: clientPrice, min: clientPrice * 2 };
+}
+
 function toItemRecord(id, item) {
+    const prices = marketPrices(item._key, item.tier, item._price);
     return {
         item: {
             id,
@@ -247,8 +278,8 @@ function toItemRecord(id, item) {
             tier: item.tier ?? null,
             attributes: {
                 BUY_PRICE: 0,
-                SELL_PRICE: 0,
-                MIN_MARKET_PRICE: 0,
+                SELL_PRICE: prices.sell,
+                MIN_MARKET_PRICE: prices.min,
                 UNTRADEABLE: !!item.untradeable
             }
         },
@@ -267,6 +298,7 @@ async function main() {
     const source = await fs.readFile(BUNDLE, 'utf8');
     const actionIds = parseStringEnum(sliceEnum(source, 'ShadowbarkTree="2000"'));
     const itemIds = parseStringEnum(sliceEnum(source, 'SylvanBar="1603"'));
+    const clientPrices = parseClientPrices(source);
     const monsterIds = parseStringEnum(sliceEnum(source, 'OutskirtsGolem="206"'));
     const equipment = parseStringEnum(sliceEnum(source, '.Hatchet="101"'));
     const speeds = parseSpeedEnum(source);
@@ -288,6 +320,8 @@ async function main() {
         }
         const id = itemIds[piece.key] || Number(item?.id);
         if (!id || !item?.name || itemsById[id]) continue;
+        item._key = piece.key;
+        item._price = clientPrices[piece.key] || 0;
         itemsById[id] = item;
     }
 
