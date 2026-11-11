@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Ironwood RPG - MWR Fork
 // @namespace    https://github.com/MWRWarrior/ironwood-scripts
-// @version      6.5.4
+// @version      6.5.5
 // @description  Fork of Pancake-Scripts with tiers 115 and 130 - https://github.com/MWRWarrior/ironwood-scripts
 // @author       MWRWarrior
 // @match        https://ironwoodrpg.com/*
@@ -13,7 +13,7 @@
 // ==/UserScript==
 
 window.PANCAKE_ROOT = 'https://iwrpg.vectordungeon.com';
-window.PANCAKE_VERSION = '6.5.4';
+window.PANCAKE_VERSION = '6.5.5';
 Object.defineProperty(Array.prototype, '_groupBy', {
     enumerable: false,
     value: function(selector) {
@@ -4459,9 +4459,6 @@ window.moduleRegistry.add('marketReader', (events, elementWatcher, itemCache, ut
                 const price = util.parseNumber(element.find('.cost').text());
                 const listingType = type !== 'OWN' ? type : element.find('.tag').length ? 'BUY' : 'SELL';
                 const isOwn = !!element.attr('disabled');
-                if (element.attr('data-pancake-order') == null) {
-                    element.attr('data-pancake-order', listings.length);
-                }
                 listings.push({
                     type: listingType,
                     item: item.id,
@@ -6067,6 +6064,13 @@ window.moduleRegistry.add('changelog', (Promise, pages, components, request, con
     let changelogs = null;
 
     const localChangelogs = [{
+        id: 1608,
+        time: '2026-11-11T05:00:00.000Z',
+        title: 'v6.5.5 - Market sorting',
+        entries: [
+            'Fixed - Market - Name search and price sort no longer get overwritten'
+        ]
+    }, {
         id: 1607,
         time: '2026-11-11T00:00:00.000Z',
         title: 'v6.5.4 - Gathering prices',
@@ -9165,6 +9169,8 @@ window.moduleRegistry.add('marketFilter', (configuration, localDatabase, events,
     };
     let pageInitialised = false;
     let listingsUpdatePromise = null;
+    let listingsRearranged = false;
+    let applyingSearch = false;
 
     async function initialise() {
         configuration.registerCheckbox({
@@ -9189,7 +9195,12 @@ window.moduleRegistry.add('marketFilter', (configuration, localDatabase, events,
 
         // clear filters when searching yourself
         $(document).on('click', 'market-listings-component .search > .clear-button', clearFilter);
-        $(document).on('input', 'market-listings-component .search > input', clearFilter);
+        $(document).on('input', 'market-listings-component .search > input', function() {
+            if (applyingSearch) {
+                return;
+            }
+            clearFilter();
+        });
 
         // Buy tab -> trigger update
         $(document).on('click', 'market-listings-component .card > .tabs > :nth-child(1)', function() {
@@ -9295,7 +9306,9 @@ window.moduleRegistry.add('marketFilter', (configuration, localDatabase, events,
     function setSearch(value) {
         const searchReference = $('market-listings-component .search > input');
         searchReference.val(value);
+        applyingSearch = true;
         searchReference[0].dispatchEvent(new Event('input'));
+        applyingSearch = false;
     }
 
     async function saveFilter() {
@@ -9392,19 +9405,23 @@ window.moduleRegistry.add('marketFilter', (configuration, localDatabase, events,
                 parent.append(listing.element);
             }
         }
+        listingsRearranged = true;
     }
 
     function resetListingsView(marketData) {
-        const listings = marketData.listings.slice().sort((a, b) => {
-            return (+a.element.attr('data-pancake-order') || 0) - (+b.element.attr('data-pancake-order') || 0);
-        });
-        const parent = listings[0]?.element.parent();
-        for (const listing of listings) {
-            if (parent) {
-                parent.append(listing.element);
-            }
-            listing.element.find('.ratio').remove();
-            listing.element.show();
+        if (!listingsRearranged) {
+            return;
+        }
+        listingsRearranged = false;
+        for (const element of marketData.listings.map(a => a.element)) {
+            element.find('.ratio').remove();
+            element.show();
+        }
+        // Ask the game to rebuild Date / Item / Price order. Re-appending rows
+        // here put filtered-out listings back and undid the price sort.
+        const activeSort = $('market-listings-component button.sort-active');
+        if (activeSort.length) {
+            activeSort.trigger('click');
         }
     }
 

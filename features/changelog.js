@@ -6,6 +6,13 @@
     let changelogs = null;
 
     const localChangelogs = [{
+        id: 1608,
+        time: '2026-11-11T05:00:00.000Z',
+        title: 'v6.5.5 - Market sorting',
+        entries: [
+            'Fixed - Market - Name search and price sort no longer get overwritten'
+        ]
+    }, {
         id: 1607,
         time: '2026-11-11T00:00:00.000Z',
         title: 'v6.5.4 - Gathering prices',

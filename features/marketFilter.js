@@ -23,6 +23,8 @@
     };
     let pageInitialised = false;
     let listingsUpdatePromise = null;
+    let listingsRearranged = false;
+    let applyingSearch = false;
 
     async function initialise() {
         configuration.registerCheckbox({
@@ -47,7 +49,12 @@
 
         // clear filters when searching yourself
         $(document).on('click', 'market-listings-component .search > .clear-button', clearFilter);
-        $(document).on('input', 'market-listings-component .search > input', clearFilter);
+        $(document).on('input', 'market-listings-component .search > input', function() {
+            if (applyingSearch) {
+                return;
+            }
+            clearFilter();
+        });
 
         // Buy tab -> trigger update
         $(document).on('click', 'market-listings-component .card > .tabs > :nth-child(1)', function() {
@@ -153,7 +160,9 @@
     function setSearch(value) {
         const searchReference = $('market-listings-component .search > input');
         searchReference.val(value);
+        applyingSearch = true;
         searchReference[0].dispatchEvent(new Event('input'));
+        applyingSearch = false;
     }
 
     async function saveFilter() {
@@ -250,19 +259,23 @@
                 parent.append(listing.element);
             }
         }
+        listingsRearranged = true;
     }
 
     function resetListingsView(marketData) {
-        const listings = marketData.listings.slice().sort((a, b) => {
-            return (+a.element.attr('data-pancake-order') || 0) - (+b.element.attr('data-pancake-order') || 0);
-        });
-        const parent = listings[0]?.element.parent();
-        for (const listing of listings) {
-            if (parent) {
-                parent.append(listing.element);
-            }
-            listing.element.find('.ratio').remove();
-            listing.element.show();
+        if (!listingsRearranged) {
+            return;
+        }
+        listingsRearranged = false;
+        for (const element of marketData.listings.map(a => a.element)) {
+            element.find('.ratio').remove();
+            element.show();
+        }
+        // Ask the game to rebuild Date / Item / Price order. Re-appending rows
+        // here put filtered-out listings back and undid the price sort.
+        const activeSort = $('market-listings-component button.sort-active');
+        if (activeSort.length) {
+            activeSort.trigger('click');
         }
     }
 
