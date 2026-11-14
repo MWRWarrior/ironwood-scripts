@@ -6,6 +6,13 @@
     let changelogs = null;
 
     const localChangelogs = [{
+        id: 1610,
+        time: '2026-11-14T18:35:00.000Z',
+        title: 'v6.5.7 - Script load',
+        entries: [
+            'Fixed - Script - The market filter update no longer stops the script from loading'
+        ]
+    }, {
         id: 1609,
         time: '2026-11-14T16:30:00.000Z',
         title: 'v6.5.6 - Market filters',
