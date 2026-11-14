@@ -6,6 +6,13 @@
     let changelogs = null;
 
     const localChangelogs = [{
+        id: 1609,
+        time: '2026-11-14T16:30:00.000Z',
+        title: 'v6.5.6 - Market filters',
+        entries: [
+            'Added - Market filter - Tier 115 and 130 items are included in the resource filters'
+        ]
+    }, {
         id: 1608,
         time: '2026-11-11T05:00:00.000Z',
         title: 'v6.5.5 - Market sorting',

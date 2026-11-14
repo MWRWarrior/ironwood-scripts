@@ -238,6 +238,66 @@ function inferType(action) {
     return 'ACTIVITY';
 }
 
+const GEAR_SUFFIXES = ['Sword', 'Hammer', 'Scythe', 'Spear', 'Bow', 'Boomerang', 'Rod', 'Spade', 'Hatchet', 'Pickaxe', 'Lantern', 'Compass', 'Boots', 'Gloves', 'Helmet', 'Shield'];
+const YIELD_FIELDS = {
+    Charcoal: 'charcoal',
+    Compost: 'compost',
+    ArcanePowder: 'arcanePowder',
+    PetSnacks: 'petSnacks',
+    MetalParts: 'metalParts',
+    SigilPieces: 'sigilPieces',
+    ResearchPoints: 'researchPoints'
+};
+
+// Same yields the market filters already use for tiers 1-8.
+function conversionRecipe(key, item) {
+    const tier = item.tier || 0;
+    const gear = /^(Sylvan|Glacial)/.test(key);
+    if (key === 'ShadowbarkLog' || key === 'ElderwoodLog') {
+        return { resource: 'Charcoal', skill: 'Smelting', amount: tier };
+    }
+    if (key === 'MassiveBone' || key === 'MassiveFang') {
+        return { resource: 'Compost', skill: 'Farming', amount: tier * 2 };
+    }
+    if (key === 'Mulberry') {
+        return { resource: 'Compost', skill: 'Farming', amount: 180 };
+    }
+    if (key === 'Pineapple') {
+        return { resource: 'Compost', skill: 'Farming', amount: 200 };
+    }
+    if (key === 'Celestine') {
+        return { resource: 'ArcanePowder', skill: 'Enchanting', amount: 450 };
+    }
+    if (key === 'Faestone') {
+        return { resource: 'ArcanePowder', skill: 'Enchanting', amount: 500 };
+    }
+    if (key === 'RawMarlin' || key === 'RawDragonfish') {
+        return { resource: 'PetSnacks', skill: 'Taming', amount: tier };
+    }
+    if (gear && key.endsWith('Body')) {
+        return { resource: 'MetalParts', skill: 'Enchanting', amount: tier * 3 };
+    }
+    if (gear && GEAR_SUFFIXES.some(suffix => key.endsWith(suffix))) {
+        return { resource: 'MetalParts', skill: 'Enchanting', amount: tier * 2 };
+    }
+    if (/^(Mega|Ultimate)/.test(key) && key.endsWith('Sigil')) {
+        return { resource: 'SigilPieces', skill: 'Imbuing', amount: tier * 2 };
+    }
+    if (key === 'Logbook115' || key === 'Logbook130') {
+        return { resource: 'ResearchPoints', skill: 'Exploring', amount: tier };
+    }
+    if (/^(Mega|Ultimate)/.test(key) && key.endsWith('Potion')) {
+        return { resource: 'PotionMix', skill: 'Alchemy', amount: tier * 5 + 2 };
+    }
+    if (key === 'CookedMarlin' || key === 'CookedDragonfish') {
+        return { resource: 'Health', skill: 'Defense', amount: tier * 20, resourceId: -2 };
+    }
+    if (key === 'MarlinPie' || key === 'DragonfishPie') {
+        return { resource: 'Health', skill: 'Defense', amount: tier * 30, resourceId: -2 };
+    }
+    return null;
+}
+
 const RESOURCE_ITEMS = {
     charcoal: 'Charcoal',
     compost: 'Compost',
@@ -395,6 +455,35 @@ async function main() {
     for (const level of [115, 130]) {
         if (itemIds[`EliteKey${level}`]) referencedItems.add(itemIds[`EliteKey${level}`]);
     }
+    if (itemIds.Charcoal !== 2 || itemIds.PotionMix !== 1043 || itemIds.ResearchPoints !== 1042) {
+        throw new Error(`Resource id mismatch charcoal=${itemIds.Charcoal} potionMix=${itemIds.PotionMix} research=${itemIds.ResearchPoints}`);
+    }
+
+    const conversions = [];
+    for (const item of Object.values(itemsById)) {
+        const recipe = conversionRecipe(item._key, item);
+        if (!recipe) continue;
+        const sourceId = itemIds[item._key];
+        const resourceId = recipe.resourceId || itemIds[recipe.resource];
+        if (!sourceId || !resourceId || !recipe.amount) {
+            throw new Error(`Bad conversion for ${item._key}: ${JSON.stringify(recipe)}`);
+        }
+        const field = YIELD_FIELDS[recipe.resource];
+        if (field) item[field] = recipe.amount;
+        referencedItems.add(sourceId);
+        conversions.push({
+            key: item._key,
+            name: item.name,
+            sourceId,
+            resourceId,
+            skill: recipe.skill,
+            resource: recipe.resource,
+            amount: recipe.amount
+        });
+    }
+    if (conversions.length !== 68) {
+        throw new Error(`Expected 68 tier 115/130 conversions, found ${conversions.length}`);
+    }
 
     const items = [];
     const seenItems = new Set();
@@ -462,6 +551,40 @@ async function main() {
         delete action._raw;
         delete action._key;
     }
+    let conversionActionId = -820000;
+    for (const conversion of conversions) {
+        const actionId = conversionActionId--;
+        actions.push({
+            id: actionId,
+            skill: conversion.skill,
+            type: 'CONVERSION',
+            structure: null,
+            monster: null,
+            item: conversion.resourceId,
+            name: `Conversion ${conversion.resource} ${conversion.name}`,
+            image: 'N/A',
+            level: 1,
+            exp: 0,
+            speed: 0,
+            tier: 0,
+            monsterGroup: null,
+            outskirtsMonsterChance: 0
+        });
+        drops.push({
+            id: dropId--,
+            action: actionId,
+            item: conversion.resourceId,
+            type: 'GUARANTEED',
+            chance: 1,
+            amount: conversion.amount
+        });
+        ingredients.push({
+            id: ingredientId--,
+            action: actionId,
+            item: conversion.sourceId,
+            amount: 1
+        });
+    }
 
     const payload = { actions, items, monsters, drops, ingredients };
     await fs.writeFile(OUT, `() => (${JSON.stringify(payload)})\n`);
@@ -472,6 +595,7 @@ async function main() {
         monsters: monsters.length,
         drops: drops.length,
         ingredients: ingredients.length,
+        conversions: conversions.length,
         evalFailures,
         skipped,
         bySkill
